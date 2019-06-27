@@ -1,7 +1,7 @@
 #!/bin/bash
 
 to_script() {
-  awk "/^ping $IP_FILTER .*$/ {if (\$$COLUMN_ID) print \$2 \"=\" \$$COLUMN_ID}" | xargs echo a
+  awk "/^ping $IP_FILTER .*$/ {if (\$$COLUMN_ID!=\"\") print \$2 \"=\" \$$COLUMN_ID}" | xargs echo a
 }
 
 read_ping() {
