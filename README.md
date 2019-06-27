@@ -1,4 +1,4 @@
-# chart+ping
+# ping+chart
 
 Show ping statistics in [asciichart](https://github.com/kroitor/asciichart).
 
@@ -21,9 +21,9 @@ Chart options:
 - **sent** - packets sent
 - **receive** - packets received
 - **loss (default)** - % packet loss
-- **avg** - average RTT (round-trip time) in millisecond
-- **min** - minumum RTT in millisecond
-- **max** - maximum RTT in millisecond
+- **avg** - average RTT value in millisecond
+- **min** - minumum RTT value
+- **max** - maximum RTT value
 - **mdev** - standard deviation on RTT
 
 Plot average network latency:

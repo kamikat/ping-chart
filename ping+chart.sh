@@ -6,10 +6,12 @@ to_script() {
 
 read_ping() {
   # read statistics store
-  while read STAT_FILE; do
-    cat $STAT_FILE | to_script
-  done < <(find statistics -type f | sort | head -n-1 | tail -n $(tput cols))
-  echo g
+  if [ ! -n "$NO_HISTORY" ]; then
+    while read STAT_FILE; do
+      cat $STAT_FILE | to_script
+    done < <(find statistics -type f | sort -r | tail -n+2 | head -n $(tput cols) | tac)
+    echo g
+  fi
   # read incremental log
   while read LINE; do
     if [[ "$LINE" =~ ^.*saved.\((.*)\).*$ ]]; then
@@ -19,17 +21,34 @@ read_ping() {
   done
 }
 
-case "$1" in
-  -h|--help)
-    echo >&2 "Usage: $0 [-h | -f] [<column>] [<addr-filter>]"
-    exit
-    ;;
-  -f|follow)
-    FOLLOW_FILE="$2"
-    shift
-    shift
-    ;;
-esac
+INPUT_COMMAND="bash ping.sh"
+CHART_COMMAND="bash chart.sh"
+
+while true; do
+  case "$1" in
+    -h|--help)
+      echo >&2 "Usage: $0 [-h | -f] [<column>] [<addr-filter>]"
+      exit
+      ;;
+    -f|--follow)
+      INPUT_COMMAND="tail -n0 -f $2"
+      shift
+      ;;
+    -q|--quiet)
+      INPUT_COMMAND="echo"
+      ;;
+    -c|--clear)
+      NO_HISTORY=1
+      ;;
+    -r|--raw)
+      CHART_COMMAND=cat
+      ;;
+    *)
+      break
+      ;;
+  esac
+  shift
+done
 
 if [ -n "$1" ]; then
   case "$1" in
@@ -65,10 +84,7 @@ if [ -n "$1" ]; then
 else
   COLUMN_ID=5
 fi
+
 IP_FILTER=${2:-'.*'}
 
-if [ -z "$FOLLOW_FILE" ]; then
-  bash ping.sh | read_ping | bash chart.sh
-else
-  tail -n0 -f $FOLLOW_FILE | read_ping | bash chart.sh
-fi
+$INPUT_COMMAND | read_ping | $CHART_COMMAND
