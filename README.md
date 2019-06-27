@@ -2,6 +2,8 @@
 
 Show ping statistics in [asciichart](https://github.com/kroitor/asciichart).
 
+![screenshot.png](docs/screenshot.png)
+
 ## Basic Usage
 
 Generate `server.lst` (a TSV file contains IPv4 addresses)
