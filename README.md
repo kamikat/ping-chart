@@ -6,7 +6,7 @@ Show ping statistics in [asciichart](https://github.com/kroitor/asciichart).
 
 ## Basic Usage
 
-Generate `server.lst` (a TSV file contains IPv4 addresses)
+Generate `servers.lst` (a TSV file contains IPv4 addresses)
 
 For Vultr API:
 
@@ -43,6 +43,8 @@ Plot chart:
 ## TODOs
 
 - [ ] better performance
+- [ ] chart title / legend
+- [ ] tweak color scheme
 
 ## License
 
