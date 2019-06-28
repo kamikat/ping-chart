@@ -125,9 +125,13 @@ repl() {
       g|plot)
         if [ "$WIDTH" == "auto" ]; then
           PLOT_WIDTH=$(tput cols)
+        else
+          PLOT_WIDTH=$WIDTH
         fi
         if [ "$HEIGHT" == "auto" ]; then
           PLOT_HEIGHT=$(($(tput lines) - 1))
+        else
+          PLOT_HEIGHT=$HEIGHT
         fi
         OUTPUT_BUFFER=$(plot)
         cat <<< "$OUTPUT_BUFFER$(tput sgr0)"
@@ -192,6 +196,46 @@ repl() {
 
 plot() {
   BC_SCALE="scale=$PLOT_PRECISION+2"
+
+  if [ -z "$NO_LEGEND" ]; then
+    # measure legend size
+    PLOT_LEGEND_PADDING=2
+    PLOT_LEGEND_WIDTH=$((PLOT_WIDTH - PLOT_AXIS_WIDTH - 2 * PLOT_LEGEND_PADDING))
+    PLOT_LEGEND_TITLE_WIDTH=8
+    declare -a PLOT_LEGEND_TITLE=()
+    for SERIES_NAME in "${!PLOT_SERIES[@]}"; do
+      SERIES_LENGTH=$(wc -c <<< "$SERIES_NAME" | tr -d ' ')
+      if [ $SERIES_LENGTH -gt $PLOT_LEGEND_TITLE_WIDTH ]; then
+        PLOT_LEGEND_TITLE_WIDTH=$SERIES_LENGTH
+      fi
+      PLOT_LEGEND_TITLE+=("$SERIES_NAME")
+    done
+    if [ $PLOT_LEGEND_TITLE_WIDTH -gt $((PLOT_LEGEND_WIDTH - 4)) ]; then
+      # subtract width of ╶╴ line marker and right-padding
+      PLOT_LEGEND_TITLE_WIDTH=$((PLOT_LEGEND_WIDTH - 4))
+    fi
+    PLOT_LEGEND_COLS_N=$((PLOT_LEGEND_WIDTH / (PLOT_LEGEND_TITLE_WIDTH + 4)))
+    PLOT_LEGEND_HEIGHT=$((${#PLOT_SERIES[@]} / PLOT_LEGEND_COLS_N))
+    if (( ${#PLOT_SERIES[@]} % PLOT_LEGEND_COLS_N > 0 )); then
+      PLOT_LEGEND_HEIGHT=$((PLOT_LEGEND_HEIGHT + 1))
+    fi
+
+    # change PLOT_HEIGHT to spare legend text
+    PLOT_HEIGHT=$((PLOT_HEIGHT - PLOT_LEGEND_HEIGHT))
+
+    # plot legend
+    for K in $(seq 0 $(( ${#PLOT_SERIES[@]} - 1))); do
+      if (( K % PLOT_LEGEND_COLS_N == 0 )); then
+        # new line if not first line of legend
+        [ $K -gt 0 ] && echo
+        # pad to align with Y axis
+        printf "%$((PLOT_AXIS_WIDTH + PLOT_LEGEND_PADDING))s" " "
+      fi
+      SERIES_NAME="${PLOT_LEGEND_TITLE[$K]}"
+      printf "$(put_graph_style $K)╶─╴ $STYLE_LEGEND_LABEL%-${PLOT_LEGEND_TITLE_WIDTH}s " "${SERIES_NAME:0:$PLOT_LEGEND_TITLE_WIDTH}"
+    done
+    echo
+  fi
 
   PLOT_MIN_Y=${PLOT_MIN_Y:-0}
   PLOT_MAX_Y=${PLOT_MAX_Y:-1}
