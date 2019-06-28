@@ -20,16 +20,30 @@ else
   }
 fi
 
+test_graph_style() {
+  for I in $(seq 0 $((COLOR_SCHEME_SIZE - 1))); do
+    echo -n "$(tput setab ${COLOR_SCHEME[$((($I) % $COLOR_SCHEME_SIZE))]})$(tput setaf 16) $I $(tput sgr0)"
+  done
+  echo
+}
+
 use_color_scheme() {
   declare -g -a COLOR_SCHEME=()
   while read R G B; do
     COLOR_SCHEME+=("$(rgb $R $G $B)")
   done
+  COLOR_SCHEME_SIZE=${#COLOR_SCHEME[@]}
+  [ -n "$DEBUG" ] && test_graph_style >&2
 }
 
-if [ -z "$COLOR_SCHEME" ]; then
-  if [ $(tput colors) -ge 256 2>/dev/null ]; then
-    # 8-bit dark color scheme
+if [ -n "$COLOR_SCHEME" ]; then
+  use_color_scheme <<< "$COLOR_SCHEME"
+else
+  if [ "$TERM_BG" != "light" ]; then
+    # dark color scheme
+    # h = 0 120 60 240 300 180 330 90 30 210 270 150
+    # l = 0.69
+    # s = 0.97
     use_color_scheme << RGB
 253 99 99
 99 253 99
@@ -37,30 +51,29 @@ if [ -z "$COLOR_SCHEME" ]; then
 99 99 253
 253 99 253
 99 253 253
-253 176 99
-99 253 176
-176 253 99
-176 99 253
 253 99 176
+176 253 99
+253 176 99
 99 176 253
+176 99 253
+99 253 176
 RGB
   else
-    # 4-bit color scheme
+    # light color scheme
+    # h = 0 120 240 330 30 210 270
+    # l = 0.50
+    # s = 0.90
     use_color_scheme << RGB
-255 0 0
-0 255 0
-255 255 0
-0 0 255
-255 0 255
-0 255 255
-0 0 0
+243 12 12
+12 243 12
+12 12 243
+243 12 128
+243 127 12
+12 127 243
+127 12 243
 RGB
   fi
-else
-  use_color_scheme <<< "$COLOR_SCHEME"
 fi
-
-COLOR_SCHEME_SIZE=${#COLOR_SCHEME[@]}
 
 put_graph_style() {
   tput sgr0
