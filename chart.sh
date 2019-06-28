@@ -179,6 +179,7 @@ repl() {
 
 plot() {
   BC_SCALE="scale=$PLOT_PRECISION+2"
+
   PLOT_MIN_Y=${PLOT_MIN_Y:-0}
   PLOT_MAX_Y=${PLOT_MAX_Y:-1}
   PLOT_VSPACING=$(bc <<< "$BC_SCALE; ($PLOT_MAX_Y - $PLOT_MIN_Y) / ($PLOT_HEIGHT - 1)")
@@ -199,15 +200,14 @@ plot() {
       IFS="=" read SERIES_NAME VALUE <<< "$DATA_POINT"
       N=$(bc <<< "$BC_SCALE; ($VALUE - $PLOT_MIN_Y)/$PLOT_VSPACING")
       N=$(bc <<< "n=$N; (n/1+(n-n/1)*2/1)")
-      if [ -z "${PLOT_GRAPH_LOOKUP[$((PLOT_HEIGHT - N))]}" ]; then
-        PLOT_GRAPH_LOOKUP[$((PLOT_HEIGHT - N))]="${PLOT_SERIES[$SERIES_NAME]}"
-      else
-        PLOT_GRAPH_LOOKUP[$((PLOT_HEIGHT - N))]="${PLOT_GRAPH_LOOKUP[$((PLOT_HEIGHT - N))]}
+      PLOT_GRAPH_LOOKUP[$((PLOT_HEIGHT - N))]="${PLOT_GRAPH_LOOKUP[$((PLOT_HEIGHT - N))]}
 ${PLOT_SERIES[$SERIES_NAME]}"
-      fi
     done
 
     PLOT_NODE_LIST=""
+
+    # ids of non-continous series in current column
+    PLOT_BREAK_NODE_LIST=$(tr -d ' ' <<< "${PLOT_GRAPH_LOOKUP[@]} ${LAST_PLOT_GRAPH_LOOKUP[@]}" | sort | uniq -u)
 
     # draw column to row memory buffer (PLOT_GRAPH_LOOKUP)
     for N in $(seq $PLOT_HEIGHT); do
@@ -222,25 +222,17 @@ ${PLOT_SERIES[$SERIES_NAME]}"
       else
         # draw curve
         LAST_SERIES_IDS="${LAST_PLOT_GRAPH_LOOKUP[$N]}"
-        ALL_SERIES_IDS=$(sort -gr <<< "$PLOT_NODE_LIST
-$SERIES_IDS
-$LAST_SERIES_IDS")
+        ALL_SERIES_IDS=$(tr -d ' ' <<< "$PLOT_NODE_LIST $SERIES_IDS $LAST_SERIES_IDS" | sort -gr)
         SIGNIFICANT_ID=$(head -n1 <<< "$ALL_SERIES_IDS")
+
         if [ -n "$SIGNIFICANT_ID" ]; then
+          # draw significant
           if ! (grep $SIGNIFICANT_ID >/dev/null <<< "${PLOT_GRAPH_LOOKUP[@]}"); then
             # significant does not close, insert close character
             PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╴"
-            while [ -n "$SIGNIFICANT_ID" ] && ! (grep $SIGNIFICANT_ID >/dev/null <<< "${PLOT_GRAPH_LOOKUP[@]}"); do
-              ALL_SERIES_IDS=$(tail -n+2 <<< "$ALL_SERIES_IDS")
-              SIGNIFICANT_ID=$(head -n1 <<< "$ALL_SERIES_IDS")
-            done
           elif ! (grep "$SIGNIFICANT_ID" >/dev/null <<< "${LAST_PLOT_GRAPH_LOOKUP[@]}"); then
             # significant does not open, insert open character
             PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╶"
-            while [ -n "$SIGNIFICANT_ID" ] && ! (grep "$SIGNIFICANT_ID" >/dev/null <<< "${LAST_PLOT_GRAPH_LOOKUP[@]}"); do
-              ALL_SERIES_IDS=$(tail -n+2 <<< "$ALL_SERIES_IDS")
-              SIGNIFICANT_ID=$(head -n1 <<< "$ALL_SERIES_IDS")
-            done
           else
             # significant open and close
             if (grep $SIGNIFICANT_ID >/dev/null <<< "$SERIES_IDS"); then
@@ -271,6 +263,9 @@ $LAST_SERIES_IDS")
               fi
             fi
           fi
+
+          # update active series ids except series in PLOT_BREAK_NODE_LIST
+          ALL_SERIES_IDS=$(tr -d ' ' <<< "$ALL_SERIES_IDS $PLOT_BREAK_NODE_LIST $PLOT_BREAK_NODE_LIST" | sort | uniq -u)
           PLOT_NODE_LIST=$(uniq -u <<< "$ALL_SERIES_IDS")
         else
           # draw blank
