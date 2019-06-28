@@ -10,32 +10,64 @@ STYLE_AXIS_RULER=$(tput sgr0)
 STYLE_AXIS_LABEL=$(tput sgr0)
 STYLE_LEGEND_LABEL=$(tput sgr0)
 
+if [ $(tput colors) -ge 256 2>/dev/null ]; then
+  rgb() {
+    echo $((($1 * 6) / 256 * 36 + ($2 * 6) / 256 * 6 + ($3 * 6) / 256 + 16))
+  }
+else
+  rgb() {
+    echo $(($3 / 128 * 4 + $2 / 128 * 2 + $1 / 128))
+  }
+fi
+
+use_color_scheme() {
+  declare -g -a COLOR_SCHEME=()
+  while read R G B; do
+    COLOR_SCHEME+=("$(rgb $R $G $B)")
+  done
+}
+
 if [ -z "$COLOR_SCHEME" ]; then
-  if [ $TERM_BG == "light" ]; then
-    if [ $(tput colors) -ge 256 2>/dev/null ]; then
-      declare -a COLOR_SCHEME=(124 34 220 20 92 23)
-    else
-      # use 4-bit light color scheme
-      declare -a COLOR_SCHEME=(1 2 3 4 5 6)
-    fi
+  if [ $(tput colors) -ge 256 2>/dev/null ]; then
+    # 8-bit dark color scheme
+    use_color_scheme << RGB
+248 114 114
+248 248 114
+114 248 114
+114 248 248
+114 114 248
+248 114 248
+248 181 114
+181 248 114
+114 248 181
+114 181 248
+181 114 248
+248 114 181
+RGB
   else
-    if [ $(tput colors) -ge 256 2>/dev/null ]; then
-      # use 8-bit dark color scheme
-      declare -a COLOR_SCHEME=(205 121 208 81 226 69 191 204 210 219)
-    else
-      # use 4-bit dark color scheme
-      declare -a COLOR_SCHEME=(1 2 3 4 5 6 7)
-    fi
+    # 4-bit color scheme
+    use_color_scheme << RGB
+255 0 0
+0 255 0
+255 255 0
+0 0 255
+255 0 255
+0 255 255
+0 0 0
+RGB
   fi
+else
+  use_color_scheme <<< "$COLOR_SCHEME"
 fi
 
 COLOR_SCHEME_SIZE=${#COLOR_SCHEME[@]}
+
 put_graph_style() {
   tput sgr0
-  if [ "$(($1 / $COLOR_SCHEME_SIZE % 2))" == "1" ]; then
+  if [ "$((($1 - 1) / $COLOR_SCHEME_SIZE % 2))" == "1" ]; then
     tput bold
   fi
-  tput setaf ${COLOR_SCHEME[$(($1 % $COLOR_SCHEME_SIZE))]}
+  tput setaf ${COLOR_SCHEME[$((($1 - 1) % $COLOR_SCHEME_SIZE))]}
 }
 
 #########
