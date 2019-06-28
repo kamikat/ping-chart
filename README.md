@@ -1,6 +1,6 @@
 # ping+chart
 
-Show ping statistics in [asciichart](https://github.com/kroitor/asciichart).
+Ping statistics in ASCII chart.
 
 <img src="docs/screenshot-1.png" width="512" alt="screenshot.png"></img>
 
@@ -31,7 +31,17 @@ E.g, plot average network latency statistics:
 
     bash chart+ping.sh avg
 
-_It may take minutes to generate a single chart._
+_**NOTE** It may take minutes to generate a single chart._
+
+## chart.sh
+
+The `chart.sh` is a bash implementation of ASCII chart inspired by
+[asciichart](https://github.com/kroitor/asciichart) with additional features:
+
+- Multiple data series
+- Color scheme (built-in dark/light theme and 256 color support)
+- Non-continuous data series support
+- Legend box (can be turn off by `NO_LEGEND=1` flag)
 
 ## Advanced Usage
 
