@@ -29,7 +29,7 @@ CHART_COMMAND="to_chart"
 while true; do
   case "$1" in
     -h|--help)
-      echo >&2 "Usage: $0 [-h | -f] [<column>] [<addr-filter>]"
+      echo >&2 "Usage: $0 [-h] [-f|-q] [-c] [-r] [<column>] [<addr-filter>]"
       exit
       ;;
     -f|--follow)
