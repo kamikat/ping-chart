@@ -194,48 +194,49 @@ ${PLOT_SERIES[$SERIES_NAME]}"
 $SERIES_IDS
 $LAST_SERIES_IDS")
         SIGNIFICANT_ID=$(head -n1 <<< "$ALL_SERIES_IDS")
-        while [ -n "$SIGNIFICANT_ID" ] && ! (grep $SIGNIFICANT_ID >/dev/null <<< "${PLOT_GRAPH_LOOKUP[@]}"); do
-          # significant does not close, ignore it, find next significant to plot
-          ALL_SERIES_IDS=$(tail -n+2 <<< "$ALL_SERIES_IDS")
-          SIGNIFICANT_ID=$(head -n1 <<< "$ALL_SERIES_IDS")
-        done
-        if [ -n "$SIGNIFICANT_ID" ] && ! (grep "$SIGNIFICANT_ID" >/dev/null <<< "${LAST_PLOT_GRAPH_LOOKUP[@]}"); then
-          # significant does not open, insert ─, find remaining series, skip to next row
-          PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)─"
-          while [ -n "$SIGNIFICANT_ID" ] && ! (grep "$SIGNIFICANT_ID" >/dev/null <<< "${LAST_PLOT_GRAPH_LOOKUP[@]}"); do
-            ALL_SERIES_IDS=$(tail -n+2 <<< "$ALL_SERIES_IDS")
-            SIGNIFICANT_ID=$(head -n1 <<< "$ALL_SERIES_IDS")
-          done
-          PLOT_NODE_LIST=$(uniq -u <<< "$ALL_SERIES_IDS")
-          continue
-        fi
         if [ -n "$SIGNIFICANT_ID" ]; then
-          # significant open and close
-          if (grep $SIGNIFICANT_ID >/dev/null <<< "$SERIES_IDS"); then
-            if (grep $SIGNIFICANT_ID >/dev/null <<< "$LAST_SERIES_IDS"); then
-              # use ─ if most significant in both current and last
-              PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)─"
-            else
-              if ! (grep $SIGNIFICANT_ID >/dev/null <<< "$PLOT_NODE_LIST"); then
-                # use ╭ if most significant in current and an open mark
-                PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╭"
-              else
-                # use ╰ if most significant in current and a close mark
-                PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╰"
-              fi
-            fi
+          if ! (grep $SIGNIFICANT_ID >/dev/null <<< "${PLOT_GRAPH_LOOKUP[@]}"); then
+            # significant does not close, insert close character
+            PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╴"
+            while [ -n "$SIGNIFICANT_ID" ] && ! (grep $SIGNIFICANT_ID >/dev/null <<< "${PLOT_GRAPH_LOOKUP[@]}"); do
+              ALL_SERIES_IDS=$(tail -n+2 <<< "$ALL_SERIES_IDS")
+              SIGNIFICANT_ID=$(head -n1 <<< "$ALL_SERIES_IDS")
+            done
+          elif ! (grep "$SIGNIFICANT_ID" >/dev/null <<< "${LAST_PLOT_GRAPH_LOOKUP[@]}"); then
+            # significant does not open, insert open character
+            PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╶"
+            while [ -n "$SIGNIFICANT_ID" ] && ! (grep "$SIGNIFICANT_ID" >/dev/null <<< "${LAST_PLOT_GRAPH_LOOKUP[@]}"); do
+              ALL_SERIES_IDS=$(tail -n+2 <<< "$ALL_SERIES_IDS")
+              SIGNIFICANT_ID=$(head -n1 <<< "$ALL_SERIES_IDS")
+            done
           else
-            if (grep $SIGNIFICANT_ID >/dev/null <<< "$LAST_SERIES_IDS"); then
-              if ! (grep $SIGNIFICANT_ID >/dev/null <<< "$PLOT_NODE_LIST"); then
-                # use ╮ if most significant in last and an open mark
-                PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╮"
+            # significant open and close
+            if (grep $SIGNIFICANT_ID >/dev/null <<< "$SERIES_IDS"); then
+              if (grep $SIGNIFICANT_ID >/dev/null <<< "$LAST_SERIES_IDS"); then
+                # use ─ if most significant in both current and last
+                PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)─"
               else
-                # use ╯ if most significant in last and a close mark
-                PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╯"
+                if ! (grep $SIGNIFICANT_ID >/dev/null <<< "$PLOT_NODE_LIST"); then
+                  # use ╭ if most significant in current and an open mark
+                  PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╭"
+                else
+                  # use ╰ if most significant in current and a close mark
+                  PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╰"
+                fi
               fi
             else
-              # use │ if less significant
-              PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)│"
+              if (grep $SIGNIFICANT_ID >/dev/null <<< "$LAST_SERIES_IDS"); then
+                if ! (grep $SIGNIFICANT_ID >/dev/null <<< "$PLOT_NODE_LIST"); then
+                  # use ╮ if most significant in last and an open mark
+                  PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╮"
+                else
+                  # use ╯ if most significant in last and a close mark
+                  PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)╯"
+                fi
+              else
+                # use │ if less significant
+                PLOT_GRAPH_DATA[$N]="${PLOT_GRAPH_DATA[$N]}$(put_graph_style $SIGNIFICANT_ID)│"
+              fi
             fi
           fi
           PLOT_NODE_LIST=$(uniq -u <<< "$ALL_SERIES_IDS")
