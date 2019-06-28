@@ -31,18 +31,18 @@ if [ -z "$COLOR_SCHEME" ]; then
   if [ $(tput colors) -ge 256 2>/dev/null ]; then
     # 8-bit dark color scheme
     use_color_scheme << RGB
-248 114 114
-248 248 114
-114 248 114
-114 248 248
-114 114 248
-248 114 248
-248 181 114
-181 248 114
-114 248 181
-114 181 248
-181 114 248
-248 114 181
+253 99 99
+99 253 99
+253 253 99
+99 99 253
+253 99 253
+99 253 253
+253 176 99
+99 253 176
+176 253 99
+176 99 253
+253 99 176
+99 176 253
 RGB
   else
     # 4-bit color scheme
@@ -67,7 +67,7 @@ put_graph_style() {
   if [ "$((($1 - 1) / $COLOR_SCHEME_SIZE % 2))" == "1" ]; then
     tput bold
   fi
-  tput setaf ${COLOR_SCHEME[$((($1 - 1) % $COLOR_SCHEME_SIZE))]}
+  tput setaf ${COLOR_SCHEME[$((($1) % $COLOR_SCHEME_SIZE))]}
 }
 
 #########
