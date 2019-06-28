@@ -2,7 +2,7 @@
 
 Show ping statistics in [asciichart](https://github.com/kroitor/asciichart).
 
-![screenshot.png](docs/screenshot.png)
+<img src="docs/screenshot-1.png" width="512" alt="screenshot.png"></img>
 
 ## Basic Usage
 
@@ -13,7 +13,7 @@ Create `servers.lst` like:
     8.8.8.8
     1.2.3.4
 
-Plot realtime ping chart of packet loss statistics (default metrics):
+Plot realtime ping chart of packet loss statistics (the default metric):
 
     bash ping+chart.sh
 
@@ -45,7 +45,9 @@ Plot chart continously:
 
     bash ping+chart.sh -f ping.log [other chart options]
 
-### Take Snapshot
+![multiple chart display](docs/screenshot-2.png)
+
+### Snapshot
 
 Export chart script:
 
