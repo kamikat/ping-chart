@@ -6,7 +6,7 @@ PROG_PARSE_1='s@PING ([0-9.]+).*--- ([0-9]+) packets transmitted, ([0-9]+) .*, (
 PROG_PARSE_2='s@PING ([0-9.]+).*--- ([0-9]+) packets transmitted, ([0-9]+) .*, ([0-9.]+)%.*$@ping \1 \2 \3 \4@g' # in case of 100% packet loss
 
 structured_ping() {
-  timeout -s QUIT $PING_INTERVAL ping -q $@ | xargs | sed -E "$PROG_PARSE_1" | sed -E "$PROG_PARSE_2"
+  timeout --foreground -s INT $PING_INTERVAL ping -q $@ | xargs | sed -E "$PROG_PARSE_1" | sed -E "$PROG_PARSE_2"
 }
 
 PING_INTERVAL=${1:-60}
