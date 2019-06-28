@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source chart.sh
+
 to_script() {
   awk "/^ping $IP_FILTER .*$/ {if (\$$COLUMN_ID!=\"\") print \$2 \"=\" \$$COLUMN_ID}" | xargs echo a
 }
@@ -22,7 +24,7 @@ read_ping() {
 }
 
 INPUT_COMMAND="bash ping.sh"
-CHART_COMMAND="bash chart.sh"
+CHART_COMMAND="to_chart"
 
 while true; do
   case "$1" in

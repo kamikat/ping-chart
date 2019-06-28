@@ -306,4 +306,6 @@ ${PLOT_SERIES[$SERIES_NAME]}"
   unset PLOT_GRAPH_DATA
 }
 
-to_chart
+if [ "$(basename $0)" == "chart.sh" ]; then
+  to_chart
+fi
