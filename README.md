@@ -57,7 +57,7 @@ Plot chart from snapshot:
 
     bash chart.sh < loss-chart.cs
 
-## TODOs
+## Todos
 
 - [ ] better performance
 - [ ] Y-axis auto down scale (too slow)
