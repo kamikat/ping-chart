@@ -279,7 +279,9 @@ ${PLOT_SERIES[$SERIES_NAME]}"
         # draw curve
         LAST_SERIES_IDS="${LAST_PLOT_GRAPH_LOOKUP[$N]}"
         ALL_SERIES_IDS=$(tr -d ' ' <<< "$PLOT_NODE_LIST $SERIES_IDS $LAST_SERIES_IDS" | sort -gr)
-        SIGNIFICANT_ID=$(head -n1 <<< "$ALL_SERIES_IDS")
+
+        # use largest sequence id as significant
+        read SIGNIFICANT_ID <<< "$ALL_SERIES_IDS"
 
         if [ -n "$SIGNIFICANT_ID" ]; then
           # draw significant
