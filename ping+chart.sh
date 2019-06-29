@@ -72,7 +72,7 @@ if [ -n "$1" ]; then
     b|max)
       COLUMN_ID=8
       ;;
-    k|mdev)
+    k|stddev|mdev)
       COLUMN_ID=9
       ;;
     [3-9])

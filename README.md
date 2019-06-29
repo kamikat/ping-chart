@@ -25,7 +25,7 @@ Available metrics:
 - **avg** - average RTT value in millisecond
 - **min** - minumum RTT value
 - **max** - maximum RTT value
-- **mdev** - standard deviation on RTT
+- **stddev** - standard deviation on RTT
 
 E.g, plot average network latency statistics:
 
