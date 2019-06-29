@@ -193,6 +193,14 @@ repl() {
   done
 }
 
+row2col() {
+  tr -s ' ' '\n'
+}
+
+col2row() {
+  paste -sd ' ' -
+}
+
 plot() {
   BC_SCALE="scale=$PLOT_PRECISION+2"
 
@@ -255,14 +263,13 @@ plot() {
     for DATA_POINT in ${PLOT_DATA[$K]}; do
       IFS="=" read SERIES_NAME VALUE <<< "$DATA_POINT"
       N=$(bc <<< "$BC_SCALE; n=($VALUE - $PLOT_MIN_Y)/$PLOT_VSPACING; scale=0; (n/1+(n-n/1)*2/1)")
-      PLOT_GRAPH_LOOKUP[$((PLOT_HEIGHT - N))]+="
-${PLOT_SERIES[$SERIES_NAME]}"
+      PLOT_GRAPH_LOOKUP[$((PLOT_HEIGHT - N))]+=" ${PLOT_SERIES[$SERIES_NAME]} "
     done
 
     PLOT_NODE_LIST=""
 
     # ids of non-continous series in current column
-    PLOT_BREAK_NODE_LIST=$(tr -d ' ' <<< "${PLOT_GRAPH_LOOKUP[@]} ${LAST_PLOT_GRAPH_LOOKUP[@]}" | sort | uniq -u)
+    PLOT_BREAK_NODE_LIST=$(row2col <<< "${PLOT_GRAPH_LOOKUP[@]} ${LAST_PLOT_GRAPH_LOOKUP[@]}" | sort | uniq -u | col2row)
 
     # draw column to row memory buffer (PLOT_GRAPH_LOOKUP)
     for N in $(seq $PLOT_HEIGHT); do
@@ -277,27 +284,27 @@ ${PLOT_SERIES[$SERIES_NAME]}"
       else
         # draw curve
         LAST_SERIES_IDS="${LAST_PLOT_GRAPH_LOOKUP[$N]}"
-        ALL_SERIES_IDS=$(tr -d ' ' <<< "$PLOT_NODE_LIST $SERIES_IDS $LAST_SERIES_IDS" | sort -gr)
+        ALL_SERIES_IDS=$(row2col <<< "$PLOT_NODE_LIST $SERIES_IDS $LAST_SERIES_IDS" | sort -gr | col2row)
 
         # use largest sequence id as significant
-        read SIGNIFICANT_ID <<< "$ALL_SERIES_IDS"
+        read SIGNIFICANT_ID _ <<< "$ALL_SERIES_IDS"
 
         if [ -n "$SIGNIFICANT_ID" ]; then
           # draw significant
-          if ! (grep $SIGNIFICANT_ID >/dev/null <<< "${PLOT_GRAPH_LOOKUP[@]}"); then
+          if [[ ! " ${PLOT_GRAPH_LOOKUP[@]} " =~ " $SIGNIFICANT_ID " ]]; then
             # significant does not close, insert close character
             PLOT_GRAPH_DATA[$N]+="$(put_graph_style $SIGNIFICANT_ID)╴"
-          elif ! (grep "$SIGNIFICANT_ID" >/dev/null <<< "${LAST_PLOT_GRAPH_LOOKUP[@]}"); then
+          elif [[ ! " ${LAST_PLOT_GRAPH_LOOKUP[@]} " =~ " $SIGNIFICANT_ID " ]]; then
             # significant does not open, insert open character
             PLOT_GRAPH_DATA[$N]+="$(put_graph_style $SIGNIFICANT_ID)╶"
           else
             # significant open and close
-            if (grep $SIGNIFICANT_ID >/dev/null <<< "$SERIES_IDS"); then
-              if (grep $SIGNIFICANT_ID >/dev/null <<< "$LAST_SERIES_IDS"); then
+            if [[ " $SERIES_IDS " =~ " $SIGNIFICANT_ID " ]]; then
+              if [[ " $LAST_SERIES_IDS " =~ " $SIGNIFICANT_ID " ]]; then
                 # use ─ if most significant in both current and last
                 PLOT_GRAPH_DATA[$N]+="$(put_graph_style $SIGNIFICANT_ID)─"
               else
-                if ! (grep $SIGNIFICANT_ID >/dev/null <<< "$PLOT_NODE_LIST"); then
+                if [[ ! " $PLOT_NODE_LIST " =~ " $SIGNIFICANT_ID " ]]; then
                   # use ╭ if most significant in current and an open mark
                   PLOT_GRAPH_DATA[$N]+="$(put_graph_style $SIGNIFICANT_ID)╭"
                 else
@@ -306,8 +313,8 @@ ${PLOT_SERIES[$SERIES_NAME]}"
                 fi
               fi
             else
-              if (grep $SIGNIFICANT_ID >/dev/null <<< "$LAST_SERIES_IDS"); then
-                if ! (grep $SIGNIFICANT_ID >/dev/null <<< "$PLOT_NODE_LIST"); then
+              if [[ " $LAST_SERIES_IDS " =~ " $SIGNIFICANT_ID " ]]; then
+                if [[ ! " $PLOT_NODE_LIST " =~ " $SIGNIFICANT_ID " ]]; then
                   # use ╮ if most significant in last and an open mark
                   PLOT_GRAPH_DATA[$N]+="$(put_graph_style $SIGNIFICANT_ID)╮"
                 else
@@ -322,8 +329,7 @@ ${PLOT_SERIES[$SERIES_NAME]}"
           fi
 
           # update active series ids except series in PLOT_BREAK_NODE_LIST
-          ALL_SERIES_IDS=$(tr -d ' ' <<< "$ALL_SERIES_IDS $PLOT_BREAK_NODE_LIST $PLOT_BREAK_NODE_LIST" | sort | uniq -u)
-          PLOT_NODE_LIST=$(uniq -u <<< "$ALL_SERIES_IDS")
+          PLOT_NODE_LIST=$(row2col <<< "$ALL_SERIES_IDS $PLOT_BREAK_NODE_LIST $PLOT_BREAK_NODE_LIST" | sort | uniq -u | col2row)
         else
           # draw blank
           PLOT_GRAPH_DATA[$N]+=" "
