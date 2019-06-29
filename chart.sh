@@ -193,14 +193,6 @@ repl() {
   done
 }
 
-row2col() {
-  tr -s ' ' '\n'
-}
-
-col2row() {
-  paste -sd ' ' -
-}
-
 plot() {
   BC_SCALE="scale=$PLOT_PRECISION+2"
 
@@ -269,7 +261,9 @@ plot() {
     PLOT_NODE_LIST=""
 
     # ids of non-continous series in current column
-    PLOT_BREAK_NODE_LIST=$(row2col <<< "${PLOT_GRAPH_LOOKUP[@]} ${LAST_PLOT_GRAPH_LOOKUP[@]}" | sort | uniq -u | col2row)
+    PLOT_BREAK_NODE_LIST="${PLOT_GRAPH_LOOKUP[@]} ${LAST_PLOT_GRAPH_LOOKUP[@]}"
+    PLOT_BREAK_NODE_LIST="$(sort <<< "${PLOT_BREAK_NODE_LIST// /$'\n'}" | uniq -u)"
+    PLOT_BREAK_NODE_LIST="${PLOT_BREAK_NODE_LIST//$'\n'/ }"
 
     # draw column to row memory buffer (PLOT_GRAPH_LOOKUP)
     for N in $(seq $PLOT_HEIGHT); do
@@ -284,10 +278,14 @@ plot() {
       else
         # draw curve
         LAST_SERIES_IDS="${LAST_PLOT_GRAPH_LOOKUP[$N]}"
-        ALL_SERIES_IDS=$(row2col <<< "$PLOT_NODE_LIST $SERIES_IDS $LAST_SERIES_IDS" | sort -gr | col2row)
 
         # use largest sequence id as significant
-        read SIGNIFICANT_ID _ <<< "$ALL_SERIES_IDS"
+        unset SIGNIFICANT_ID
+        for SERIES_ID in $PLOT_NODE_LIST $SERIES_IDS $LAST_SERIES_IDS; do
+          if ((SERIES_ID > SIGNIFICANT_ID)); then
+            SIGNIFICANT_ID=$SERIES_ID
+          fi
+        done
 
         if [ -n "$SIGNIFICANT_ID" ]; then
           # draw significant
@@ -329,7 +327,9 @@ plot() {
           fi
 
           # update active series ids except series in PLOT_BREAK_NODE_LIST
-          PLOT_NODE_LIST=$(row2col <<< "$ALL_SERIES_IDS $PLOT_BREAK_NODE_LIST $PLOT_BREAK_NODE_LIST" | sort | uniq -u | col2row)
+          PLOT_NODE_LIST="$PLOT_NODE_LIST $SERIES_IDS $LAST_SERIES_IDS $PLOT_BREAK_NODE_LIST $PLOT_BREAK_NODE_LIST"
+          PLOT_NODE_LIST="$(sort <<< "${PLOT_NODE_LIST// /$'\n'}" | uniq -u)"
+          PLOT_NODE_LIST="${PLOT_NODE_LIST//$'\n'/ }"
         else
           # draw blank
           PLOT_GRAPH_DATA[$N]+=" "
