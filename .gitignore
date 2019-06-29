@@ -2,3 +2,4 @@
 /statistics
 /*.cs
 /*.log
+/*.prof.sh
