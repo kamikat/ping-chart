@@ -31,7 +31,7 @@ E.g, plot average network latency statistics:
 
     bash chart+ping.sh avg
 
-_**NOTE** It may take minutes to generate a single chart._
+_**NOTE** It can take seconds to generate a single chart._
 
 ## chart.sh
 
@@ -69,7 +69,7 @@ Plot chart from snapshot:
 
 ## Todos
 
-- [ ] better performance
+- [x] better performance
 - [ ] Y-axis auto down scale (too slow)
 - [x] chart legend display
 - [x] tweak color scheme
