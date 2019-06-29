@@ -19,11 +19,11 @@ while IFS=' ' read LINE_NO COUNT; do
   HIT_MAP[$LINE_NO]=$COUNT
 done < <(cat $LOG_FILE | grep -E "^# $SCRIPT_FILE" | cut -d' ' -f3 | sort | uniq -c | awk '{print $2 " " $1}')
 
-while IFS=$'\t' read LINE_NO TEXT; do
+while IFS=$'\t' read -r LINE_NO TEXT; do
   HIT_COUNT=${HIT_MAP[$(tr -d ' ' <<< "$LINE_NO")]}
   if [ -n "$HIT_COUNT" ]; then
     printf "%-67s # %d hit(s)\n" "$TEXT" "$HIT_COUNT"
   else
-    echo "$TEXT"
+    printf "%s\n" "$TEXT"
   fi
 done < <(cat -n $SCRIPT_FILE)
