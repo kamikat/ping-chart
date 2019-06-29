@@ -254,8 +254,7 @@ plot() {
     # calculate data points
     for DATA_POINT in ${PLOT_DATA[$K]}; do
       IFS="=" read SERIES_NAME VALUE <<< "$DATA_POINT"
-      N=$(bc <<< "$BC_SCALE; ($VALUE - $PLOT_MIN_Y)/$PLOT_VSPACING")
-      N=$(bc <<< "n=$N; (n/1+(n-n/1)*2/1)")
+      N=$(bc <<< "$BC_SCALE; n=($VALUE - $PLOT_MIN_Y)/$PLOT_VSPACING; scale=0; (n/1+(n-n/1)*2/1)")
       PLOT_GRAPH_LOOKUP[$((PLOT_HEIGHT - N))]+="
 ${PLOT_SERIES[$SERIES_NAME]}"
     done
