@@ -11,10 +11,12 @@ STYLE_AXIS_LABEL=$(tput sgr0)
 STYLE_LEGEND_LABEL=$(tput sgr0)
 
 if [ $(tput colors) -ge 256 2>/dev/null ]; then
+  CONTROL_SETAF='38;5;'
   rgb() {
     echo $((($1 * 6) / 256 * 36 + ($2 * 6) / 256 * 6 + ($3 * 6) / 256 + 16))
   }
 else
+  CONTROL_SETAF='9'
   rgb() {
     echo $(($3 / 128 * 4 + $2 / 128 * 2 + $1 / 128))
   }
@@ -76,11 +78,8 @@ RGB
 fi
 
 put_graph_style() {
-  tput sgr0
-  if [ "$((($1 - 1) / $COLOR_SCHEME_SIZE % 2))" == "1" ]; then
-    tput bold
-  fi
-  tput setaf ${COLOR_SCHEME[$((($1) % $COLOR_SCHEME_SIZE))]}
+  CURRENT_COLOR=${COLOR_SCHEME[$(($1 % COLOR_SCHEME_SIZE))]}
+  echo -n $'\e[0m\e['${CONTROL_SETAF}${CURRENT_COLOR}$'m'
 }
 
 #########
