@@ -279,8 +279,10 @@ plot() {
         # draw curve
         LAST_SERIES_IDS="${LAST_PLOT_GRAPH_LOOKUP[$N]}"
 
+        # use a default value
+        read SIGNIFICANT_ID _ <<< "$PLOT_NODE_LIST $SERIES_IDS $LAST_SERIES_IDS"
+
         # use largest sequence id as significant
-        unset SIGNIFICANT_ID
         for SERIES_ID in $PLOT_NODE_LIST $SERIES_IDS $LAST_SERIES_IDS; do
           if ((SERIES_ID > SIGNIFICANT_ID)); then
             SIGNIFICANT_ID=$SERIES_ID
