@@ -96,13 +96,7 @@ to_chart() {
 
   PLOT_AXIS_WIDTH=${AXIS_WIDTH:-12}
   PLOT_FLOAT_PRECISION=$((FLOAT_PRECISION + 2))
-
-  if [ "$MIN_Y" != "auto" ]; then
-    PLOT_MIN_Y=$MIN_Y
-  fi
-  if [ "$MAX_Y" != "auto" ]; then
-    PLOT_MAX_Y=$MAX_Y
-  fi
+  PLOT_FLOAT_1=1$(printf "%0${PLOT_FLOAT_PRECISION}d" 0)
 
   # setup series data store
   declare -A PLOT_SERIES
@@ -145,6 +139,13 @@ repl() {
         fi
         if [ "$MAX_Y" != "auto" ]; then
           PLOT_MAX_Y=$MAX_Y
+        fi
+        if (( PLOT_MAX_Y <= PLOT_MIN_Y )); then
+          if [ "$MAX_Y" != "auto" ]; then
+            PLOT_MIN_Y=$((PLOT_MAX_Y - PLOT_FLOAT_1))
+          else
+            PLOT_MAX_Y=$((PLOT_MIN_Y + PLOT_FLOAT_1))
+          fi
         fi
 
         OUTPUT_BUFFER=$(plot)
