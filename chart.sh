@@ -111,7 +111,7 @@ to_chart() {
 }
 
 repl() {
-  while read COMMAND SERIES_DATA; do
+  while read COMMAND PAYLOAD; do
     case $COMMAND in
       a|append)
         # add to existing series data
@@ -119,6 +119,7 @@ repl() {
         ;;
       u|update)
         # change latest series data
+        unset PLOT_DATA[$PLOT_CURSOR_LAST]
         PLOT_CURSOR_LAST=$((PLOT_CURSOR_LAST))
         ;;
       g|plot)
@@ -132,13 +133,26 @@ repl() {
         else
           PLOT_HEIGHT=$HEIGHT
         fi
+
+        if [ "$MIN_Y" != "auto" -o "$MAX_Y" == "auto" ]; then
+          MIN_MAX=$(tr -s ' ' '\n' <<< ${PLOT_DATA[@]} | cut -d'=' -f2 | sort -n | sed -n '1p;$p')
+          MIN_MAX=${MIN_MAX//$'\n'/ }
+          read PLOT_MIN_Y PLOT_MAX_Y <<< "$MIN_MAX"
+        fi
+        if [ "$MIN_Y" != "auto" ]; then
+          PLOT_MIN_Y=$MIN_Y
+        fi
+        if [ "$MAX_Y" != "auto" ]; then
+          PLOT_MAX_Y=$MAX_Y
+        fi
+
         OUTPUT_BUFFER=$(plot)
         cat <<< "$OUTPUT_BUFFER$(tput sgr0)"
         unset OUTPUT_BUFFER
         continue
         ;;
       .|source)
-        repl < "$SERIES_DATA"
+        repl < "$PAYLOAD"
         continue
         ;;
       r|resize)
@@ -151,7 +165,6 @@ repl() {
         unset PLOT_SERIES
         unset PLOT_DATA
         unset PLOT_CURSOR_LAST
-        unset PLOT_MIN_Y PLOT_MAX_Y
         declare -A PLOT_SERIES
         declare -A PLOT_DATA
         continue
@@ -165,26 +178,14 @@ repl() {
         ;;
     esac
 
-    # update PLOT_SERIES definition
-    for DATA_POINT in $SERIES_DATA; do
-      IFS='=' read SERIES_NAME VALUE <<< "$DATA_POINT"
+    for SERIES_POINT in $PAYLOAD; do
+      IFS='=' read SERIES_NAME VALUE <<< "$SERIES_POINT"
       if [ -z "${PLOT_SERIES[$SERIES_NAME]}" ]; then
+        # add series name to PLOT_SERIES
         PLOT_SERIES[$SERIES_NAME]=${#PLOT_SERIES[@]}
       fi
-      if [ "$MIN_Y" == "auto" ]; then
-        if (( $(bc -l <<< "${PLOT_MIN_Y:-0} > $VALUE") )) || [ -z "$PLOT_MIN_Y" ]; then
-          PLOT_MIN_Y=$VALUE
-        fi
-      fi
-      if [ "$MAX_Y" == "auto" ]; then
-        if (( $(bc -l <<< "${PLOT_MAX_Y:-0} < $VALUE") )) || [ -z "$PLOT_MAX_Y" ]; then
-          PLOT_MAX_Y=$VALUE
-        fi
-      fi
+      PLOT_DATA[$PLOT_CURSOR_LAST]+="$SERIES_NAME=$VALUE "
     done
-
-    # add series data
-    PLOT_DATA[$PLOT_CURSOR_LAST]="$SERIES_DATA"
 
     # trim history to MAX_HISTORY
     while [ ${#PLOT_DATA[@]} -gt $MAX_HISTORY ]; do
