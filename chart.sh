@@ -92,9 +92,10 @@ to_chart() {
   MIN_Y=${MIN_Y:-auto}
   MAX_Y=${MAX_Y:-auto}
   MAX_HISTORY=${MAX_HISTORY:-300}
+  FLOAT_PRECISION=${FLOAT_PRECISION:-2}
 
   PLOT_AXIS_WIDTH=${AXIS_WIDTH:-12}
-  PLOT_PRECISION=${PLOT_PRECISION:-2}
+  PLOT_FLOAT_PRECISION=$((FLOAT_PRECISION + 2))
 
   if [ "$MIN_Y" != "auto" ]; then
     PLOT_MIN_Y=$MIN_Y
@@ -184,6 +185,9 @@ repl() {
         # add series name to PLOT_SERIES
         PLOT_SERIES[$SERIES_NAME]=${#PLOT_SERIES[@]}
       fi
+      # scale float to integer
+      VALUE=$(printf "%.${PLOT_FLOAT_PRECISION}f" $VALUE)
+      VALUE=${VALUE//./}
       PLOT_DATA[$PLOT_CURSOR_LAST]+="$SERIES_NAME=$VALUE "
     done
 
@@ -195,8 +199,6 @@ repl() {
 }
 
 plot() {
-  BC_SCALE="scale=$PLOT_PRECISION+2"
-
   if [ -z "$NO_LEGEND" ]; then
     # measure legend size
     PLOT_LEGEND_PADDING=2
@@ -239,7 +241,7 @@ plot() {
 
   PLOT_MIN_Y=${PLOT_MIN_Y:-0}
   PLOT_MAX_Y=${PLOT_MAX_Y:-1}
-  PLOT_VSPACING=$(bc <<< "$BC_SCALE; ($PLOT_MAX_Y - $PLOT_MIN_Y) / ($PLOT_HEIGHT - 1)")
+  PLOT_VSPACING=$(((PLOT_MAX_Y - PLOT_MIN_Y) / (PLOT_HEIGHT - 1)))
   PLOT_AXIS_LABEL_WIDTH=$((PLOT_AXIS_WIDTH - 2))
   PLOT_CURSOR_FIRST=$((PLOT_CURSOR_LAST - (PLOT_WIDTH - PLOT_AXIS_WIDTH) + 1))
   PLOT_CURSOR_FIRST=$((PLOT_CURSOR_FIRST > 1 ? PLOT_CURSOR_FIRST : 1))
@@ -255,7 +257,11 @@ plot() {
     # calculate data points
     for DATA_POINT in ${PLOT_DATA[$K]}; do
       IFS="=" read SERIES_NAME VALUE <<< "$DATA_POINT"
-      N=$(bc <<< "$BC_SCALE; n=($VALUE - $PLOT_MIN_Y)/$PLOT_VSPACING; scale=0; (n/1+(n-n/1)*2/1)")
+      N=$(((VALUE - PLOT_MIN_Y) / PLOT_VSPACING))
+      R=$(((VALUE - PLOT_MIN_Y) % PLOT_VSPACING))
+      if (( R * 2 >= PLOT_VSPACING )); then
+        N=$((N + 1))
+      fi
       PLOT_GRAPH_LOOKUP[$((PLOT_HEIGHT - N))]+=" ${PLOT_SERIES[$SERIES_NAME]} "
     done
 
@@ -352,8 +358,9 @@ plot() {
 
   # print rows
   for N in $(seq $PLOT_HEIGHT); do
-    PLOT_LINE_Y=$(bc <<< "$BC_SCALE; $PLOT_MAX_Y - $PLOT_VSPACING * ($N - 1)")
-    printf "${STYLE_AXIS_LABEL}%${PLOT_AXIS_LABEL_WIDTH}.2f${STYLE_AXIS_RULER} ${PLOT_GRAPH_DATA[$N]}\n" $PLOT_LINE_Y
+    PLOT_LINE_Y=$(printf "%0${PLOT_FLOAT_PRECISION}d" $((PLOT_MAX_Y - PLOT_VSPACING * (N - 1))))
+    PLOT_LINE_Y="${PLOT_LINE_Y::-$PLOT_FLOAT_PRECISION}.${PLOT_LINE_Y:(-$PLOT_FLOAT_PRECISION)}"
+    printf "${STYLE_AXIS_LABEL}%${PLOT_AXIS_LABEL_WIDTH}.${FLOAT_PRECISION}f${STYLE_AXIS_RULER} ${PLOT_GRAPH_DATA[$N]}\n" $PLOT_LINE_Y
   done
 
   unset PLOT_GRAPH_DATA
