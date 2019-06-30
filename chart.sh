@@ -203,13 +203,13 @@ plot() {
     PLOT_LEGEND_WIDTH=$((PLOT_WIDTH - PLOT_AXIS_WIDTH - 2 * PLOT_LEGEND_PADDING))
     PLOT_LEGEND_TITLE_WIDTH=8
     declare -a PLOT_LEGEND_TITLE=()
-    for SERIES_NAME in "${!PLOT_SERIES[@]}"; do
+    while read SERIES_NAME; do
       SERIES_LENGTH=$(wc -c <<< "$SERIES_NAME" | tr -d ' ')
       if [ $SERIES_LENGTH -gt $PLOT_LEGEND_TITLE_WIDTH ]; then
         PLOT_LEGEND_TITLE_WIDTH=$SERIES_LENGTH
       fi
       PLOT_LEGEND_TITLE+=("$SERIES_NAME")
-    done
+    done < <(tr -s ' ' '\n' <<< "${!PLOT_SERIES[@]}" | sort)
     if [ $PLOT_LEGEND_TITLE_WIDTH -gt $((PLOT_LEGEND_WIDTH - 4)) ]; then
       # subtract width of ╶╴ line marker and right-padding
       PLOT_LEGEND_TITLE_WIDTH=$((PLOT_LEGEND_WIDTH - 4))
@@ -232,7 +232,7 @@ plot() {
         printf "%$((PLOT_AXIS_WIDTH + PLOT_LEGEND_PADDING))s" " "
       fi
       SERIES_NAME="${PLOT_LEGEND_TITLE[$K]}"
-      printf "$(put_graph_style $K)╶─╴ $STYLE_LEGEND_LABEL%-${PLOT_LEGEND_TITLE_WIDTH}s " "${SERIES_NAME:0:$PLOT_LEGEND_TITLE_WIDTH}"
+      printf "$(put_graph_style ${PLOT_SERIES[$SERIES_NAME]})╶─╴ $STYLE_LEGEND_LABEL%-${PLOT_LEGEND_TITLE_WIDTH}s " "${SERIES_NAME:0:$PLOT_LEGEND_TITLE_WIDTH}"
     done
     echo
   fi
