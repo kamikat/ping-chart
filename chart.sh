@@ -189,6 +189,7 @@ repl() {
       # scale float to integer
       VALUE=$(printf "%.${PLOT_FLOAT_PRECISION}f" $VALUE)
       VALUE=${VALUE//./}
+      VALUE=$((10#$VALUE))
       PLOT_DATA[$PLOT_CURSOR_LAST]+="$SERIES_NAME=$VALUE "
     done
 
