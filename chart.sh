@@ -136,9 +136,15 @@ repl() {
         fi
         if [ "$MIN_Y" != "auto" ]; then
           PLOT_MIN_Y=$MIN_Y
+          PLOT_MIN_Y=$(printf "%.${PLOT_FLOAT_PRECISION}f" $PLOT_MIN_Y)
+          PLOT_MIN_Y=${PLOT_MIN_Y//./}
+          PLOT_MIN_Y=$((10#$PLOT_MIN_Y))
         fi
         if [ "$MAX_Y" != "auto" ]; then
           PLOT_MAX_Y=$MAX_Y
+          PLOT_MAX_Y=$(printf "%.${PLOT_FLOAT_PRECISION}f" $PLOT_MAX_Y)
+          PLOT_MAX_Y=${PLOT_MAX_Y//./}
+          PLOT_MAX_Y=$((10#$PLOT_MAX_Y))
         fi
         if (( PLOT_MAX_Y <= PLOT_MIN_Y )); then
           if [ "$MAX_Y" != "auto" ]; then
